@@ -69,10 +69,18 @@ protected:
     }
 
     void onAchievements(CCObject*) {
-        auto dict = AchievementManager::sharedState()->m_allAchievements;
-        if (!dict) return;
-        for (auto [key, value] : CCDictionaryExt<std::string, CCObject*>(dict)) {
-            GameManager::sharedState()->reportAchievementWithID(key.c_str(), 100, false);
+        auto all = AchievementManager::sharedState()->m_allAchievements;
+        if (!all) return;
+        for (auto obj : CCArrayExt<CCObject*>(all)) {
+            std::string id;
+            if (auto s = typeinfo_cast<CCString*>(obj)) {
+                id = s->getCString();
+            } else if (auto d = typeinfo_cast<CCDictionary*>(obj)) {
+                if (auto v = d->valueForKey("identifier")) id = v->getCString();
+            }
+            if (!id.empty()) {
+                GameManager::sharedState()->reportAchievementWithID(id.c_str(), 100, false);
+            }
         }
         AppDelegate::get()->trySaveGame(false);
         Notification::create("Achievements unlocked", NotificationIcon::Success)->show();

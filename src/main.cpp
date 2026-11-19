@@ -45,15 +45,19 @@ protected:
             y -= 32.f;
         }
 
+        auto applySpr = ButtonSprite::create("Apply");
+        applySpr->setScale(0.7f);
         auto applyBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Apply"), this, menu_selector(StatsPopup::onApply)
+            applySpr, this, menu_selector(StatsPopup::onApply)
         );
-        m_buttonMenu->addChildAtPosition(applyBtn, Anchor::Bottom, {-70.f, 30.f});
+        m_buttonMenu->addChildAtPosition(applyBtn, Anchor::Bottom, {-65.f, 28.f});
 
+        auto achSpr = ButtonSprite::create("All Achievements");
+        achSpr->setScale(0.55f);
         auto achBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("All Achievements"), this, menu_selector(StatsPopup::onAchievements)
+            achSpr, this, menu_selector(StatsPopup::onAchievements)
         );
-        m_buttonMenu->addChildAtPosition(achBtn, Anchor::Bottom, {60.f, 30.f});
+        m_buttonMenu->addChildAtPosition(achBtn, Anchor::Bottom, {65.f, 28.f});
 
         return true;
     }
@@ -126,8 +130,10 @@ protected:
             y -= 24.f;
         }
 
+        auto contSpr = ButtonSprite::create("Continue");
+        contSpr->setScale(0.8f);
         m_continueBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Continue"), this, menu_selector(WarningPopup::onContinue)
+            contSpr, this, menu_selector(WarningPopup::onContinue)
         );
         m_continueBtn->setVisible(false);
         m_continueBtn->setEnabled(false);

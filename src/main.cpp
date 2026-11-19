@@ -71,9 +71,8 @@ protected:
     void onAchievements(CCObject*) {
         auto dict = AchievementManager::sharedState()->m_allAchievements;
         if (!dict) return;
-        CCDictElement* el = nullptr;
-        CCDICT_FOREACH(dict, el) {
-            GameManager::sharedState()->reportAchievementWithID(el->getStrKey(), 100, false);
+        for (auto [key, value] : CCDictionaryExt<std::string, CCObject*>(dict)) {
+            GameManager::sharedState()->reportAchievementWithID(key.c_str(), 100, false);
         }
         AppDelegate::get()->trySaveGame(false);
         Notification::create("Achievements unlocked", NotificationIcon::Success)->show();

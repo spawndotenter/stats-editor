@@ -65,7 +65,8 @@ protected:
             if (v.isOk()) gsm->setStat(FIELDS[i].key, v.unwrap());
         }
         AppDelegate::get()->trySaveGame(false);
-        Notification::create("Stats applied", NotificationIcon::Success)->show();
+        GameLevelManager::sharedState()->updateUserScore();
+        Notification::create("Stats applied and sent", NotificationIcon::Success)->show();
     }
 
     void onAchievements(CCObject*) {
@@ -98,6 +99,78 @@ public:
     }
 };
 
+class WarningPopup : public Popup {
+protected:
+    std::function<void()> m_onContinue;
+    CCLabelBMFont* m_waitLabel = nullptr;
+    CCMenuItemSpriteExtra* m_continueBtn = nullptr;
+    int m_secondsLeft = 3;
+
+    bool init(std::function<void()> onContinue) {
+        if (!Popup::init(320.f, 210.f)) return false;
+        m_onContinue = std::move(onContinue);
+        this->setTitle("Warning");
+
+        auto size = m_mainLayer->getContentSize();
+        const char* lines[] = {
+            "This sends your edited stats",
+            "to the GD servers. You will",
+            "probably get leaderboard banned."
+        };
+        float y = size.height - 70.f;
+        for (auto line : lines) {
+            auto l = CCLabelBMFont::create(line, "bigFont.fnt");
+            l->setScale(0.45f);
+            l->setPosition({size.width / 2.f, y});
+            m_mainLayer->addChild(l);
+            y -= 24.f;
+        }
+
+        m_continueBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Continue"), this, menu_selector(WarningPopup::onContinue)
+        );
+        m_continueBtn->setVisible(false);
+        m_continueBtn->setEnabled(false);
+        m_buttonMenu->addChildAtPosition(m_continueBtn, Anchor::Bottom, {0.f, 35.f});
+
+        m_waitLabel = CCLabelBMFont::create("Please wait 3...", "bigFont.fnt");
+        m_waitLabel->setScale(0.5f);
+        m_mainLayer->addChildAtPosition(m_waitLabel, Anchor::Bottom, {0.f, 35.f});
+
+        this->schedule(schedule_selector(WarningPopup::tick), 1.f);
+        return true;
+    }
+
+    void tick(float) {
+        m_secondsLeft--;
+        if (m_secondsLeft > 0) {
+            m_waitLabel->setString(fmt::format("Please wait {}...", m_secondsLeft).c_str());
+        } else {
+            this->unschedule(schedule_selector(WarningPopup::tick));
+            m_waitLabel->setVisible(false);
+            m_continueBtn->setVisible(true);
+            m_continueBtn->setEnabled(true);
+        }
+    }
+
+    void onContinue(CCObject*) {
+        auto cb = m_onContinue;
+        this->onClose(nullptr);
+        if (cb) cb();
+    }
+
+public:
+    static WarningPopup* create(std::function<void()> onContinue) {
+        auto ret = new WarningPopup();
+        if (ret->init(std::move(onContinue))) {
+            ret->autorelease();
+            return ret;
+        }
+        delete ret;
+        return nullptr;
+    }
+};
+
 class $modify(StatsMenu, MenuLayer) {
     bool init() {
         if (!MenuLayer::init()) return false;
@@ -116,6 +189,14 @@ class $modify(StatsMenu, MenuLayer) {
     }
 
     void onStats(CCObject*) {
-        if (auto p = StatsPopup::create()) p->show();
+        if (Mod::get()->getSavedValue<bool>("warning-seen", false)) {
+            if (auto p = StatsPopup::create()) p->show();
+            return;
+        }
+        auto w = WarningPopup::create([] {
+            Mod::get()->setSavedValue("warning-seen", true);
+            if (auto p = StatsPopup::create()) p->show();
+        });
+        if (w) w->show();
     }
 };

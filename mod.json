@@ -1,0 +1,12 @@
+{
+  "geode": "5.11.2",
+  "gd": {
+    "android": "2.2081",
+    "win": "2.2081"
+  },
+  "version": "v1.0.0",
+  "id": "spawndotenter.statseditor",
+  "name": "Stats Editor",
+  "developer": "spawndotenter",
+  "description": "Edit your stats and unlock achievements."
+}
